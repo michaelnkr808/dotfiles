@@ -1,0 +1,82 @@
+after-login-command = []
+
+# JankyBorders bootstrap — runs the bordersrc script on AeroSpace launch.
+# Edit the colors/width in ~/.config/borders/bordersrc, then reload borders with:
+#   pkill borders && ~/.config/borders/bordersrc &
+after-startup-command = [
+  'exec-and-forget /Users/michaelr808/.config/borders/bordersrc'
+]
+
+# On workspace change: refresh the cached workspace→app map ONCE,
+# then trigger sketchybar (which fans out to all 10 space pills, each reading
+# from the cache instead of spawning its own aerospace CLI subprocess).
+exec-on-workspace-change = ['/bin/bash', '-c',
+  '/Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh'
+]
+
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+key-mapping.preset = 'qwerty'
+
+[[on-window-detected]]
+run = 'layout tiling'
+
+[gaps]
+inner.horizontal = 20
+inner.vertical = 20
+outer.left = 20
+outer.right = 20
+# Built-in display: macOS reserves ~37px for the notch/menubar above the
+# sketchybar, so a flat outer.top=50 leaves ~47px of dead space above tiles.
+# Per-monitor override matches the side gap on the MBP screen.
+outer.top = [{ monitor."Built-in Retina Display" = 20 }, 50]
+outer.bottom = 20
+
+[mode.main.binding]
+
+# Focus window
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'
+
+# Move window
+alt-shift-h = 'move left'
+alt-shift-j = 'move down'
+alt-shift-k = 'move up'
+alt-shift-l = 'move right'
+
+# Switch workspace
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = 'workspace 9'
+
+# Move window to workspace + refresh sketchybar so the moved window's
+# app icon appears in the destination pill immediately
+alt-shift-1 = ['move-node-to-workspace 1', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-2 = ['move-node-to-workspace 2', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-3 = ['move-node-to-workspace 3', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-4 = ['move-node-to-workspace 4', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-5 = ['move-node-to-workspace 5', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-6 = ['move-node-to-workspace 6', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-7 = ['move-node-to-workspace 7', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-8 = ['move-node-to-workspace 8', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+alt-shift-9 = ['move-node-to-workspace 9', 'exec-and-forget /Users/michaelr808/.config/sketchybar/plugins/update_spaces.sh']
+
+
+# Layout
+alt-shift-f = 'layout floating tiling'
+alt-f = 'fullscreen --no-outer-gaps'
+alt-b = 'balance-sizes'
+alt-slash = 'layout tiles horizontal vertical'      # toggle tile direction
+alt-comma = 'layout accordion horizontal vertical'  # toggle accordion direction
+
+# Reload
+alt-shift-r = 'reload-config'

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+options=(
+  active_color=0xff00ff0d
+  inactive_color=0x003b4252   # muted earth
+  width=7.0
+  style=round
+)
+
+/opt/homebrew/bin/borders "${options[@]}"

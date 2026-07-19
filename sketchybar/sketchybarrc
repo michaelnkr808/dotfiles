@@ -1,0 +1,151 @@
+#!/bin/bash
+# Sketchybar — FelixKratz-style polished bar.
+# Evergarden palette. Apple logo + workspace pills w/ app icons on left,
+# bracket-grouped system info on right.
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+# Nerd Font icon constants
+ICON_APPLE=$(printf '\xef\x85\xb9')     # U+F179  apple
+ICON_CHEVRON=$(printf '\xef\x81\x94')   # U+F054  chevron-right
+ICON_CLOCK=$(printf '\xef\x80\x97')     # U+F017  clock
+ICON_NET_DOWN=$(printf '\xef\x81\xa3')  # U+F063  caret-down
+ICON_NET_UP=$(printf '\xef\x81\xa2')    # U+F062  caret-up
+
+##### Bar #####
+sketchybar --bar \
+  position=top \
+  height=40 \
+  blur_radius=40 \
+  color=0x202e3440 \
+  padding_left=12 \
+  padding_right=12 \
+  corner_radius=0 \
+  border_width=0 \
+  notch_width=200 \
+  notch_display_height=0 \
+  margin=0 \
+  y_offset=0
+
+##### Defaults — generous padding for breathing room #####
+default=(
+  padding_left=6
+  padding_right=6
+  icon.font="JetBrainsMono Nerd Font:Bold:13.0"
+  label.font="JetBrainsMono Nerd Font:Semibold:12.0"
+  icon.color=0xffd8dee9
+  label.color=0xffd8dee9
+  icon.padding_left=10
+  icon.padding_right=6
+  label.padding_left=4
+  label.padding_right=10
+  background.color=0x44000000
+  background.corner_radius=10
+  background.height=26
+)
+sketchybar --default "${default[@]}"
+
+##### Apple logo (leftmost) #####
+sketchybar --add item logo left \
+           --set logo icon="$ICON_APPLE" \
+                     icon.color=0xff81a1c1 \
+                     icon.font="JetBrainsMono Nerd Font:Bold:16.0" \
+                     label.drawing=off \
+                     background.drawing=off \
+                     padding_left=10 padding_right=14
+
+##### Workspace pills #####
+sketchybar --add event aerospace_workspace_change
+
+SPACE_ICONS=("1" "2" "3" "4" "5" "6" "7" "8" "9")
+for i in "${!SPACE_ICONS[@]}"
+do
+  sid="$(($i+1))"
+  space=(
+    icon="${SPACE_ICONS[i]}"
+    icon.padding_left=10
+    icon.padding_right=4
+    label.padding_left=2
+    label.padding_right=10
+    label.drawing=off
+    padding_left=3
+    padding_right=3
+    background.corner_radius=10
+    background.height=26
+    script="$PLUGIN_DIR/space.sh"
+    click_script="aerospace workspace $sid"
+    update_freq=5
+  )
+  sketchybar --add item space."$sid" left \
+             --set space."$sid" "${space[@]}" \
+             --subscribe space."$sid" aerospace_workspace_change
+done
+
+##### Cache refresher — workspace_change only fires on switches, so opening
+##### or closing a window within the focused workspace leaves the app-icon
+##### cache stale. Tick the cache refresh every 5s so pills stay in sync.
+sketchybar --add item space_cache_refresher left \
+           --set space_cache_refresher drawing=off \
+                                       update_freq=5 \
+                                       script="$PLUGIN_DIR/update_spaces.sh"
+
+##### Chevron divider (static — no pulse, was glitchy under rapid switches) #####
+sketchybar --add item chevron left \
+           --set chevron icon="$ICON_CHEVRON" \
+                         label.drawing=off \
+                         icon.color=0xff81a1c1 \
+                         icon.font="JetBrainsMono Nerd Font:Bold:14.0" \
+                         background.drawing=off \
+                         padding_left=12 padding_right=12
+
+##### Front app #####
+sketchybar --add item front_app left \
+           --set front_app icon.drawing=off \
+                            script="$PLUGIN_DIR/front_app.sh" \
+                            label.color=0xff81a1c1 \
+                            label.font="JetBrainsMono Nerd Font:Bold:13.0" \
+                            background.drawing=off \
+                            padding_left=4 padding_right=10 \
+           --subscribe front_app front_app_switched
+
+##### Right side items (rightmost-first add order) #####
+
+# Clock — rightmost
+sketchybar --add item clock right \
+           --set clock update_freq=10 icon="$ICON_CLOCK" icon.color=0xff81a1c1 \
+                       script="$PLUGIN_DIR/clock.sh"
+
+# Battery
+sketchybar --add item battery right \
+           --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
+           --subscribe battery system_woke power_source_change
+
+# Volume
+sketchybar --add item volume right \
+           --set volume script="$PLUGIN_DIR/volume.sh" \
+           --subscribe volume volume_change
+
+# WiFi
+sketchybar --add item wifi right \
+           --set wifi update_freq=30 script="$PLUGIN_DIR/wifi.sh"
+
+# Memory
+sketchybar --add item memory right \
+           --set memory update_freq=5 script="$PLUGIN_DIR/memory.sh"
+
+# CPU
+sketchybar --add item cpu right \
+           --set cpu update_freq=5 script="$PLUGIN_DIR/cpu.sh"
+
+##### Visual grouping with brackets #####
+# A bracket wraps a set of items so they look like a connected group.
+# We make a "system" bracket around CPU/memory/network/wifi/volume/battery/clock.
+sketchybar --add bracket system_group cpu memory wifi volume battery clock \
+           --set system_group \
+                 background.color=0x33000000 \
+                 background.corner_radius=12 \
+                 background.height=30 \
+                 background.border_width=0
+
+##### Force first paint #####
+sketchybar --update

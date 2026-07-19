@@ -1,0 +1,9 @@
+[user]
+	name = michaelnkr808
+	email = 226908033+michaelnkr808@users.noreply.github.com
+[init]
+	defaultBranch = main
+[pull]
+	rebase = false
+[core]
+	excludesfile = ~/.gitignore_global
