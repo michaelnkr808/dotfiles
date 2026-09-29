@@ -66,14 +66,34 @@ require("lazy").setup({
 	},
 
 	-- Treesitter: better syntax highlighting + indentation
-	-- Pinned to `master` branch — `main` removed the `configs` module.
 	{
 		"nvim-treesitter/nvim-treesitter",
-		branch = "master",
+		branch = "main",
 		build = ":TSUpdate",
 		config = function()
+			-- Swift (and other parsers with requires_generate_from_grammar) need
+			-- `tree-sitter generate`. nvim-treesitter hardcodes a `--no-bindings`
+			-- flag that newer tree-sitter-cli (0.27+, e.g. via Homebrew) rejects,
+			-- which breaks the install with a big CLI usage error.
+			require("nvim-treesitter.install").ts_generate_args = {
+				"generate",
+				"--abi",
+				vim.treesitter.language_version,
+			}
+
 			require("nvim-treesitter.configs").setup({
-				ensure_installed = { "c", "python", "lua", "vim", "vimdoc", "bash", "markdown", "typescript", "tsx" },
+				ensure_installed = {
+					"c",
+					"python",
+					"lua",
+					"vim",
+					"vimdoc",
+					"bash",
+					"markdown",
+					"typescript",
+					"tsx",
+					"swift",
+				},
 				auto_install = true,
 				highlight = { enable = true },
 				indent = { enable = true, disable = { "c", "cpp" } },
