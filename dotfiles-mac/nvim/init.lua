@@ -1,6 +1,6 @@
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
 	vim.fn.system({
 		"git",
 		"clone",
@@ -66,37 +66,53 @@ require("lazy").setup({
 	},
 
 	-- Treesitter: better syntax highlighting + indentation
+	-- Uses the `main` branch, which is the one compatible with Neovim 0.12.
+	-- Requires: tree-sitter CLI, a C compiler, curl, and tar.
 	{
 		"nvim-treesitter/nvim-treesitter",
 		branch = "main",
+		lazy = false,
 		build = ":TSUpdate",
 		config = function()
-			-- Swift (and other parsers with requires_generate_from_grammar) need
-			-- `tree-sitter generate`. nvim-treesitter hardcodes a `--no-bindings`
-			-- flag that newer tree-sitter-cli (0.27+, e.g. via Homebrew) rejects,
-			-- which breaks the install with a big CLI usage error.
-			require("nvim-treesitter.install").ts_generate_args = {
-				"generate",
-				"--abi",
-				vim.treesitter.language_version,
-			}
+			require("nvim-treesitter").install({
+				"c",
+				"python",
+				"lua",
+				"vim",
+				"vimdoc",
+				"bash",
+				"markdown",
+				"typescript",
+				"tsx",
+				"swift",
+			})
 
-			require("nvim-treesitter.configs").setup({
-				ensure_installed = {
-					"c",
-					"python",
-					"lua",
-					"vim",
-					"vimdoc",
-					"bash",
-					"markdown",
-					"typescript",
-					"tsx",
-					"swift",
-				},
-				auto_install = true,
-				highlight = { enable = true },
-				indent = { enable = true, disable = { "c", "cpp" } },
+			vim.api.nvim_create_autocmd("FileType", {
+				callback = function(args)
+					local buf = args.buf
+					local ft = vim.bo[buf].filetype
+					local lang = vim.treesitter.language.get_lang(ft)
+					if not lang then
+						return
+					end
+
+					-- Install the parser if it's missing (replaces auto_install)
+					if not pcall(vim.treesitter.language.add, lang) then
+						local available = require("nvim-treesitter").get_available()
+						if vim.tbl_contains(available, lang) then
+							require("nvim-treesitter").install({ lang })
+						end
+						return
+					end
+
+					-- Highlighting
+					vim.treesitter.start(buf, lang)
+
+					-- Indentation (skip C/C++ so cindent handles them)
+					if ft ~= "c" and ft ~= "cpp" then
+						vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+					end
+				end,
 			})
 		end,
 	},
@@ -132,8 +148,12 @@ require("lazy").setup({
 				end,
 			})
 
-			vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
-			vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
+			vim.keymap.set("n", "[d", function()
+				vim.diagnostic.jump({ count = -1, float = true })
+			end, { desc = "Previous diagnostic" })
+			vim.keymap.set("n", "]d", function()
+				vim.diagnostic.jump({ count = 1, float = true })
+			end, { desc = "Next diagnostic" })
 			vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, { desc = "Show diagnostic" })
 		end,
 	},
